@@ -4,6 +4,8 @@ Real-time drone surveillance pipeline inspired by Anduril Lattice. Connects a DJ
 
 Built as a learning and portfolio project to explore the technical problems of building a Lattice-style C2 (command & control) system on commodity hardware.
 
+![Live demo: real-time telemetry, FOV cone, and YOLO detection markers on the map](docs/demo.gif)
+
 ## Architecture
 
 ```mermaid
