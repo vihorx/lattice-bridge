@@ -1,0 +1,43 @@
+# Android build artifacts
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/captures/
+*.iml
+*.apk
+*.aab
+
+# Python
+server/.venv/
+server/.venv-yolo/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Model exports - keep yolov8n.tflite in repo (12MB), exclude raw exports
+yolov8n_saved_model/
+*.onnx
+*.h5
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Handoff working files
+HANDOFF_*.md
+collect_handoff.sh
+handoff_files_*/
+
+# Lokalne stvari
+*.local.*
+
+# Backup files from Python heredoc patches
+*.bak
+*.bak.*
+venv/

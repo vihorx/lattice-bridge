@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000"
+    android:fitsSystemWindows="false">
+
+    <TextureView
+        android:id="@+id/videoSurface"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"/>
+
+    <TextView
+        android:id="@+id/videoPlaceholder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="WAITING FOR VIDEO FEED"
+        android:textColor="#666666"
+        android:textSize="14sp"
+        android:fontFamily="monospace"/>
+
+    <LinearLayout
+        android:id="@+id/hudPanel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="12dp"
+        android:orientation="vertical"
+        android:background="#D0000000"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/hudTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="LATTICE BRIDGE"
+            android:textColor="#66CCFF"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:fontFamily="monospace"
+            android:paddingBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/hudBat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BAT —"
+            android:textColor="#FFFFFF"
+            android:fontFamily="monospace"
+            android:textSize="12sp"/>
+
+        <TextView
+            android:id="@+id/hudSats"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SAT —"
+            android:textColor="#FFFFFF"
+            android:fontFamily="monospace"
+            android:textSize="12sp"/>
+
+        <TextView
+            android:id="@+id/hudAlt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ALT —"
+            android:textColor="#FFFFFF"
+            android:fontFamily="monospace"
+            android:textSize="12sp"/>
+
+        <TextView
+            android:id="@+id/hudSpeed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SPD —"
+            android:textColor="#FFFFFF"
+            android:fontFamily="monospace"
+            android:textSize="12sp"/>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/compassWarning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="68dp"
+        android:background="#E0AA0000"
+        android:padding="10dp"
+        android:text="⚠ MAGNETIC INTERFERENCE"
+        android:textColor="#FFFFFF"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:fontFamily="monospace"
+        android:visibility="gone"/>
+
+    <LinearLayout
+        android:id="@+id/expBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="60dp"
+        android:layout_marginEnd="80dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="4dp"
+        android:background="#D0000000">
+
+        <Button
+            android:id="@+id/expModeBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:minWidth="56dp"
+            android:padding="0dp"
+            android:text="AUTO"
+            android:textSize="10sp"/>
+
+        <Button
+            android:id="@+id/isoBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:minWidth="68dp"
+            android:padding="0dp"
+            android:text="ISO —"
+            android:textSize="10sp"/>
+
+        <Button
+            android:id="@+id/shutBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:minWidth="76dp"
+            android:padding="0dp"
+            android:text="SHUT —"
+            android:textSize="10sp"/>
+
+        <Button
+            android:id="@+id/calBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:minWidth="56dp"
+            android:padding="0dp"
+            android:text="CAL"
+            android:textSize="10sp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="4dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="6dp"
+        android:background="#A0000000">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GIMBAL"
+            android:textColor="#66CCFF"
+            android:fontFamily="monospace"
+            android:textSize="10sp"/>
+
+        <TextView
+            android:id="@+id/gimbalPitchLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0°"
+            android:textColor="#FFFFFF"
+            android:fontFamily="monospace"
+            android:textSize="12sp"
+            android:paddingBottom="6dp"/>
+
+        <SeekBar
+            android:id="@+id/gimbalSeek"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:max="120"
+            android:progress="90"
+            android:rotation="270"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="-90..+30"
+            android:textColor="#888888"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:paddingTop="6dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="80dp"
+        android:layout_marginBottom="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="6dp"
+        android:background="#A0000000">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ZOOM"
+            android:textColor="#66CCFF"
+            android:fontFamily="monospace"
+            android:textSize="10sp"
+            android:paddingEnd="8dp"/>
+
+        <TextView
+            android:id="@+id/zoomLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1.0x"
+            android:textColor="#FFFFFF"
+            android:fontFamily="monospace"
+            android:textSize="12sp"
+            android:minWidth="48dp"/>
+
+        <SeekBar
+            android:id="@+id/zoomSeek"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:max="240"
+            android:progress="0"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="24-48mm"
+            android:textColor="#888888"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:paddingStart="8dp"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/debugBox"
+        android:layout_width="280dp"
+        android:layout_height="160dp"
+        android:layout_gravity="bottom|start"
+        android:layout_marginStart="12dp"
+        android:layout_marginBottom="72dp"
+        android:orientation="vertical"
+        android:background="#D0000000"
+        android:padding="6dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="DEBUG"
+                android:textColor="#66CCFF"
+                android:fontFamily="monospace"
+                android:textSize="10sp"/>
+
+            <Button
+                android:id="@+id/toggleDebug"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:minWidth="48dp"
+                android:padding="0dp"
+                android:text="-"
+                android:textSize="11sp"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/statusView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:textColor="#66CCFF"
+            android:fontFamily="monospace"
+            android:textSize="9sp"
+            android:scrollbars="vertical"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="6dp"
+        android:background="#D0000000">
+
+        <EditText
+            android:id="@+id/hostInput"
+            android:layout_width="160dp"
+            android:layout_height="40dp"
+            android:textSize="12sp"
+            android:textColor="#FFFFFF"
+            android:fontFamily="monospace"
+            android:inputType="text"
+            android:hint="192.168.1.11"
+            android:textColorHint="#666666"/>
+
+        <Button
+            android:id="@+id/startBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:minWidth="64dp"
+            android:padding="0dp"
+            android:text="START"
+            android:textSize="11sp"/>
+
+        <Button
+            android:id="@+id/stopBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:minWidth="64dp"
+            android:padding="0dp"
+            android:text="STOP"
+            android:textSize="11sp"/>
+    </LinearLayout>
+
+</FrameLayout>

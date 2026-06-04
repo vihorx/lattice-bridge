@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <usb-accessory model="T600"        manufacturer="DJI" />
+    <usb-accessory model="AG410"       manufacturer="DJI" />
+    <usb-accessory model="WM160"       manufacturer="DJI" />
+    <usb-accessory model="MavicPart3"  manufacturer="DJI" />
+    <usb-accessory model="WM230"       manufacturer="DJI" />
+    <usb-accessory model="WM240"       manufacturer="DJI" />
+    <usb-accessory model="ASGZ16"      manufacturer="DJI" />
+    <usb-accessory model="WM245"       manufacturer="DJI" />
+    <usb-accessory model="WM246"       manufacturer="DJI" />
+    <usb-accessory model="WM170"       manufacturer="DJI" />
+    <usb-accessory model="WM231"       manufacturer="DJI" />
+    <usb-accessory model="WM232"       manufacturer="DJI" />
+    <usb-accessory model="ZV900"       manufacturer="DJI" />
+</resources>

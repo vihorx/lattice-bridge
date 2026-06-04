@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Lattice Ground Station</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <style>
+    body { margin: 0; font-family: -apple-system, sans-serif; background: #111; color: #eee; }
+    #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; }
+    #hud {
+      position: absolute; top: 12px; left: 12px; z-index: 1000;
+      background: rgba(20,20,20,0.85); padding: 12px 16px; border-radius: 8px;
+      font-family: monospace; font-size: 13px; line-height: 1.5;
+      border: 1px solid #333; min-width: 220px;
+    }
+    #hud .row { display: flex; justify-content: space-between; gap: 16px; }
+    #hud .key { color: #888; }
+    #hud .val { color: #6cf; }
+    #hud .stale { color: #f66 !important; }
+    h3 { margin: 0 0 8px 0; font-size: 13px; color: #6cf; }
+    .drone-icon {
+      width: 24px; height: 24px;
+      background: #6cf; border: 2px solid #fff; border-radius: 50%;
+      box-shadow: 0 0 12px #6cf;
+    }
+    #compass-banner {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 2000;
+      background: rgba(170, 0, 0, 0.92);
+      color: white; font-family: monospace; font-weight: bold;
+      font-size: 14px; text-align: center; padding: 10px;
+      letter-spacing: 1px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="compass-banner">⚠ MAGNETIC INTERFERENCE — compass error reported by aircraft</div>
+  <div id="map"></div>
+    <button id="copyLastBtn" style="position:fixed; bottom:14px; right:14px; z-index:1000; padding:10px 14px; font-family:monospace; font-size:12px; background:#0c0; color:#fff; border:none; border-radius:4px; cursor:pointer;">COPY LAST</button>
+    <script>
+      document.getElementById('copyLastBtn').addEventListener('click', () => {
+        if (!lastDetection) {
+          alert('Jos nema detekcija');
+          return;
+        }
+        const coords = `${lastDetection.lat.toFixed(7)}, ${lastDetection.lon.toFixed(7)}`;
+        copyToClipboard(coords);
+        const btn = document.getElementById('copyLastBtn');
+        const orig = btn.textContent;
+        btn.textContent = 'KOPIRANO ✓';
+        setTimeout(() => btn.textContent = orig, 1500);
+      });
+    </script>
+  <div id="hud">
+    <h3>DRONE TELEMETRY</h3>
+    <div class="row"><span class="key">status</span><span class="val" id="status">waiting...</span></div>
+    <div class="row"><span class="key">lat</span><span class="val" id="lat">-</span></div>
+    <div class="row"><span class="key">lon</span><span class="val" id="lon">-</span></div>
+    <div class="row"><span class="key">alt</span><span class="val" id="alt">-</span></div>
+    <div class="row"><span class="key">heading</span><span class="val" id="heading">-</span></div>
+    <div class="row"><span class="key">cam pitch</span><span class="val" id="pitch">-</span></div>
+    <div class="row"><span class="key">hfov</span><span class="val" id="hfov">-</span></div>
+    <div class="row"><span class="key">focal</span><span class="val" id="focal">-</span></div>
+    <div class="row"><span class="key">speed</span><span class="val" id="speed">-</span></div>
+    <div class="row"><span class="key">sats</span><span class="val" id="sats">-</span></div>
+    <div class="row"><span class="key">battery</span><span class="val" id="battery">-</span></div>
+    <div class="row"><span class="key">compass</span><span class="val" id="compass">-</span></div>
+  </div>
+
+  <script>
+    const map = L.map('map').setView([44.78, 20.45], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19, attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let droneMarker = null;
+    let fovPolygon = null;
+    let lookAtMarker = null;
+    let firstFix = true;
+    let lastUpdate = 0;
+    let detectionMarkers = [];  // [{marker, expireAt}, ...]
+    let lastDetection = null;  // za COPY LAST dugme
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(
+          () => console.log('clipboard OK:', text),
+          err => {
+            console.warn('clipboard fail, fallback:', err);
+            fallbackCopy(text);
+          }
+        );
+      } else {
+        fallbackCopy(text);
+      }
+    }
+    function fallbackCopy(text) {
+      const t = document.createElement('textarea');
+      t.value = text; t.style.position = 'fixed'; t.style.opacity = '0';
+      document.body.appendChild(t); t.select();
+      try { document.execCommand('copy'); console.log('execCommand OK:', text); }
+      catch (e) { console.error('copy completely failed', e); }
+      document.body.removeChild(t);
+    }
+
+    const socket = io();
+
+    socket.on('connect', () => {
+      document.getElementById('status').textContent = 'connected, no data';
+    });
+
+    socket.on('telemetry', (t) => {
+      lastUpdate = Date.now();
+      document.getElementById('status').textContent = 'live';
+      document.getElementById('status').classList.remove('stale');
+      document.getElementById('lat').textContent = t.lat.toFixed(7);
+      document.getElementById('lon').textContent = t.lon.toFixed(7);
+      document.getElementById('alt').textContent = t.alt.toFixed(1) + ' m';
+      document.getElementById('heading').textContent = t.heading.toFixed(1) + '°';
+      document.getElementById('pitch').textContent = t.cam_pitch.toFixed(1) + '°';
+      document.getElementById('hfov').textContent = t.hfov.toFixed(1) + '°';
+      document.getElementById('focal').textContent = t.focal_mm.toFixed(1) + ' mm';
+      document.getElementById('speed').textContent = t.speed.toFixed(1) + ' m/s';
+      document.getElementById('sats').textContent = t.sats;
+      document.getElementById('battery').textContent = t.battery !== null ? t.battery + '%' : '-';
+      document.getElementById('compass').textContent = t.compass_error ? 'ERROR' : 'OK';
+      document.getElementById('compass').style.color = t.compass_error ? '#f66' : '#6cf';
+
+      document.getElementById('compass-banner').style.display = t.compass_error ? 'block' : 'none';
+
+      const ll = [t.lat, t.lon];
+
+      if (!droneMarker) {
+        droneMarker = L.marker(ll, {
+          icon: L.divIcon({ className: 'drone-icon', iconSize: [24, 24] })
+        }).addTo(map);
+      } else {
+        droneMarker.setLatLng(ll);
+      }
+
+      if (t.fov_corners && t.fov_corners.every(c => c !== null)) {
+        if (!fovPolygon) {
+          fovPolygon = L.polygon(t.fov_corners, {
+            color: '#6cf', weight: 2, fillColor: '#6cf', fillOpacity: 0.15
+          }).addTo(map);
+        } else {
+          fovPolygon.setLatLngs(t.fov_corners);
+        }
+      }
+
+      if (t.look_at) {
+        if (!lookAtMarker) {
+          lookAtMarker = L.circleMarker(t.look_at, {
+            radius: 6, color: '#fc6', fillColor: '#fc6', fillOpacity: 0.9
+          }).addTo(map);
+        } else {
+          lookAtMarker.setLatLng(t.look_at);
+        }
+      }
+
+      // Stage 4A korak 2: YOLO detekcije sa server-side georef
+      if (t.detections && t.detections.length > 0) {
+        for (const d of t.detections) {
+          // spatial dedup: ako postoji marker iste klase na <3m, samo refresh expire
+          const existing = detectionMarkers.find(item => {
+            if (item.pinned) return false;  // pinned se ne dira
+            if (item.label !== d.label) return false;
+            return map.distance([item.lat, item.lon], [d.lat, d.lon]) < 3;
+          });
+          if (existing) {
+            existing.expireAt = Date.now() + 3000;
+            existing.marker.setStyle({fillOpacity: 0.7, opacity: 1});
+            // azuriraj na novu poziciju (centroid) i confidence ako je visi
+            existing.marker.setLatLng([d.lat, d.lon]);
+            if (d.conf > existing.conf) {
+              existing.conf = d.conf;
+              existing.marker.setTooltipContent(`${d.label} ${d.conf.toFixed(2)}`);
+            }
+            continue;
+          }
+          const marker = L.circleMarker([d.lat, d.lon], {
+            radius: 12, color: '#f44', fillColor: '#f44',
+            fillOpacity: 0.7, weight: 2,
+            bubblingMouseEvents: false
+          }).bindTooltip(`${d.label} ${d.conf.toFixed(2)}`).addTo(map);
+          // Track poslednja detekcija za COPY LAST dugme (radi i posle fade-a)
+          lastDetection = {lat: d.lat, lon: d.lon, label: d.label, conf: d.conf};
+          // Klik = pin marker + kopiraj coords u clipboard
+          marker.on('click', (ev) => {
+            console.log('marker click', d);
+            const coords = `${d.lat.toFixed(7)}, ${d.lon.toFixed(7)}`;
+            copyToClipboard(coords);
+            // Skini sa fade liste, prekraji u zeleno, otvori popup
+            const item = detectionMarkers.find(x => x.marker === marker);
+            if (item) item.pinned = true;
+            detectionMarkers = detectionMarkers.filter(x => x.marker !== marker);
+            marker.setStyle({fillOpacity: 0.9, opacity: 1, color: '#0c0', fillColor: '#0c0', radius: 10});
+            marker.bindPopup(`<b>PINNED</b><br>${coords}<br><i>${d.label} ${d.conf.toFixed(2)}</i><br>(u clipboard-u)`).openPopup();
+          });
+          detectionMarkers.push({marker: marker, expireAt: Date.now() + 3000, lat: d.lat, lon: d.lon, label: d.label, conf: d.conf, pinned: false});
+        }
+      }
+
+      if (firstFix) {
+        map.setView(ll, 18);
+        firstFix = false;
+      }
+    });
+
+    // Fade-out 5s za detekcije
+    setInterval(() => {
+      const now = Date.now();
+      detectionMarkers = detectionMarkers.filter(item => {
+        const remaining = item.expireAt - now;
+        if (remaining <= 0) {
+          map.removeLayer(item.marker);
+          return false;
+        }
+        const alpha = remaining / 3000;
+        item.marker.setStyle({ fillOpacity: alpha * 0.7, opacity: alpha });
+        return true;
+      });
+    }, 200);
+
+    setInterval(() => {
+      if (lastUpdate && Date.now() - lastUpdate > 2000) {
+        document.getElementById('status').textContent = 'STALE (no packets)';
+        document.getElementById('status').classList.add('stale');
+      }
+    }, 500);
+  </script>
+</body>
+</html>
