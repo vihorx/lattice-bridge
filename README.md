@@ -8,7 +8,7 @@ Built as a learning and portfolio project to explore the technical problems of b
 
 ```mermaid
 flowchart LR
-    Drone[DJI Mavic 2 Zoom] -->|MSDK over OcuSync| RC[Smart Controller]
+    Drone[DJI Mavic 2 Zoom] -->|MSDK over OcuSync| RC[Standard RC]
     RC -->|USB| Phone[Android Bridge<br/>YOLOv8n TFLite]
     Phone -->|UDP MAVLink :14550| Mac[Mac Ground Station<br/>Flask + Socket.IO]
     Phone -->|HTTP POST detections| Mac
@@ -22,7 +22,7 @@ The drone streams telemetry via DJI Mobile SDK to the Android app. The phone run
 - **Android (Kotlin):** DJI Mobile SDK 4.16.4, TensorFlow Lite (YOLOv8n INT8), Camera/Gimbal/Compass APIs
 - **Server (Python 3.9):** Flask + Flask-SocketIO, pinhole geometry, MAVLink UDP listener
 - **UI:** Leaflet.js, vanilla JS, custom marker rendering with spatial dedup and click-to-pin
-- **Hardware:** DJI Mavic 2 Zoom + Smart Controller + Redmi 13 Android phone + MacBook
+- **Hardware:** DJI Mavic 2 Zoom + standard RC + Redmi 13 Android phone + MacBook
 
 ## Project Status
 
@@ -71,7 +71,7 @@ Server listens on `:5000` (HTTP/WebSocket) and `:14550` (MAVLink UDP). Open `htt
    ./gradlew assembleDebug
    adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
-5. Connect phone via USB to DJI Smart Controller (with Mavic 2 Zoom powered on).
+5. Connect phone via USB to the standard DJI RC (Mavic 2 Zoom powered on).
 
 Phone and Mac must be on the same WiFi. Default server IP is `192.168.1.11`; adjust in the app for your Mac's address.
 
@@ -79,9 +79,9 @@ Phone and Mac must be on the same WiFi. Default server IP is `192.168.1.11`; adj
 
 **Monocular georef accuracy is geometrically bounded.** Marker distance is `altitude / tan(|gimbal_pitch|)`. At low altitudes with near-horizontal camera, distant objects project inaccurately. Recommended operating envelope: altitude 15–30m, gimbal pitch −45° to −60°.
 
-**Magnetometer drift near metal infrastructure** (steel bridges, rebar, large vehicles) can introduce up to ±20° heading error, translating to lateral marker error proportional to range. Field testing near a steel bridge showed ~26° residual drift after compass calibration.
+**Magnetometer drift near metal infrastructure** (steel bridges, rebar, large vehicles) can introduce up to ±20° heading error, translating to lateral marker error proportional to range.
 
-**No multi-target tracking** — each detection is treated independently per frame.
+**Detection only, no tracking** — multiple objects per frame are detected and shown simultaneously, but objects have no persistent IDs across frames. The same object detected on two consecutive frames produces two independent markers (the 3m spatial dedup hides this when stationary).
 
 **Single drone, single operator.** No fleet management, no air-traffic deconfliction. This is a learning project, not a production C2 system.
 
