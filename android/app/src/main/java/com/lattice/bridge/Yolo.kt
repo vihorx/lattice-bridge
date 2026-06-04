@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.Rect
 import android.util.Log
 import org.tensorflow.lite.Interpreter
+import org.tensorflow.lite.nnapi.NnApiDelegate
 import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -62,15 +63,37 @@ class Yolo(context: Context) {
     private val iouThreshold = 0.45f
     private val pixelsBuf = IntArray(inputSize * inputSize)
 
+    private var nnApiDelegate: NnApiDelegate? = null
+
     init {
         val modelBuffer = loadModelFile(context, "yolov8n.tflite")
-        val options = Interpreter.Options().apply {
-            // Helio G99 ima 8 jezgara (2x A76 + 6x A55). 4 thread-a je dobar default.
+
+        // Helio G99 nema dedicated NPU; NNAPI fallback rute na GPU (Mali-G57 MC2) ili CPU
+        // automatski preko Android drajvera. Try/catch je vazan jer MediaTek NNAPI implementacija
+        // ponekad fail-uje pri delegate creation ili pri Interpreter creation sa nepodrzanim ops.
+        val tryNnApi = Interpreter.Options().apply {
             setNumThreads(4)
         }
-        interpreter = Interpreter(modelBuffer, options)
+        val cpuFallback = Interpreter.Options().apply {
+            setNumThreads(4)
+        }
+
+        interpreter = try {
+            nnApiDelegate = NnApiDelegate()
+            tryNnApi.addDelegate(nnApiDelegate)
+            Interpreter(modelBuffer, tryNnApi).also {
+                Log.i("Yolo", "NNAPI delegate enabled")
+            }
+        } catch (t: Throwable) {
+            Log.w("Yolo", "NNAPI failed, falling back to CPU: ${t.message}")
+            nnApiDelegate?.close()
+            nnApiDelegate = null
+            Interpreter(modelBuffer, cpuFallback)
+        }
+
         labels = context.assets.open("labels.txt").bufferedReader().useLines { it.toList() }
-        Log.i("Yolo", "model + ${labels.size} labels loaded")
+        val mode = if (nnApiDelegate != null) "NNAPI" else "CPU"
+        Log.i("Yolo", "model + ${labels.size} labels loaded (delegate: $mode)")
     }
 
     private fun loadModelFile(context: Context, name: String): MappedByteBuffer {
@@ -130,7 +153,10 @@ class Yolo(context: Context) {
             inputBuffer.putFloat((px and 0xFF) / 255f)           // B
         }
 
+        val t0 = System.nanoTime()
         interpreter.run(inputBuffer, outputBuffer)
+        val ms = (System.nanoTime() - t0) / 1_000_000
+        Log.d("Yolo", "inference: ${ms}ms")
         return postprocess(outputBuffer[0], origW, origH, scale, padX, padY)
     }
 
@@ -208,5 +234,6 @@ class Yolo(context: Context) {
     fun close() {
         executor.shutdown()
         interpreter.close()
+        nnApiDelegate?.close()
     }
 }
