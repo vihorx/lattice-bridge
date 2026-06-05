@@ -81,7 +81,7 @@ Phone and Mac must be on the same WiFi. Default server IP is `192.168.1.11`; adj
 
 Field-measured georef accuracy with operator (target) stationary on a known GPS point and the drone hovering at varying altitude and distance. Ground truth was measured via phone GPS (long-press in Google Maps); marker coordinates from the app's COPY LAST button.
 
-**Ground truth:** `45.266426, 19.863698` (Novi Sad keja, klupa)
+**Ground truth:** `45.266426, 19.863698` (Novi Sad, Danube quay, bench)
 
 | # | Alt (m) | Pitch (°) | Real dist** (m) | HFOV (°) | Zoom | Offset (m) |
 |---|---------|-----------|------------------|----------|------|------------|
