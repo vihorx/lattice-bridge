@@ -77,6 +77,33 @@ Server listens on `:5000` (HTTP/WebSocket) and `:14550` (MAVLink UDP). Open `htt
 
 Phone and Mac must be on the same WiFi. Default server IP is `192.168.1.11`; adjust in the app for your Mac's address.
 
+## Accuracy
+
+Field-measured georef accuracy with operator (target) stationary on a known GPS point and the drone hovering at varying altitude and distance. Ground truth was measured via phone GPS (long-press in Google Maps); marker coordinates from the app's COPY LAST button.
+
+**Ground truth:** `45.266426, 19.863698` (Novi Sad keja, klupa)
+
+| # | Alt (m) | Pitch (°) | Real dist** (m) | HFOV (°) | Zoom | Offset (m) |
+|---|---------|-----------|------------------|----------|------|------------|
+| 1 | 10.0 | -35.6 | 11.4 | 71.7 | 1.0x | **3.50** |
+| 2 | 20.3 | -54.5 | 12.3 | 35.8 | 2.2x | **2.28** |
+| 3 | 20.2 | -37.6 | 23.8 | 38.2 | 2.1x | **4.28** |
+| 4 | 20.4 | -31.3 | 31.6 | 21.9 | 3.7x | **6.42** |
+| 5 | 30.0 | -42.2 | 32.0 | 24.0 | 3.4x | **10.78** |
+| 6 | 20.1 | -21.2 | 52.2 | 20.5 | 4.0x | **8.48** |
+| 7 | 29.5 | -28.5 | 52.3 | 20.5 | 4.0x | **12.08** |
+
+** Real dist = actual horizontal GPS distance from drone to ground truth point (haversine, not the geometric projection from pitch).
+
+**Summary:** mean offset **6.8m**, min **2.3m**, max **12.1m** across 7 trials in a single flight session. All trials under 13m without any RTK GPS, calibration grid, or post-processing — purely monocular pinhole projection from drone state telemetry.
+
+**Observations:**
+
+- **Trial #1** (10m alt, no zoom, ~11m real distance) gave **3.50m** offset — baseline close-range accuracy with wide FOV.
+- **Trials #2-#7 required optical zoom** (Mavic 2 Zoom, 2-4x focal range). At distances of 20m+ the person bbox in the wide-FOV frame is too small for reliable YOLO detection. The server reads the live `hfov` from telemetry, so geometric projection scales correctly with zoom — accuracy was not degraded by zooming, in fact several mid-range zoom trials (#2, #3) achieved offsets under 5m.
+- **Offset grows roughly with distance**, as expected. At fixed angular uncertainty in camera pose (compass + gimbal pitch noise), error amplifies linearly with projection range. Worst case (#7, ~53m real distance) was 12.08m, dominated by the lateral component (compass heading drift).
+- Phone GPS itself has ~3-5m precision, so true system error is likely lower than reported figures by that amount.
+
 ## Limitations
 
 **Monocular georef accuracy is geometrically bounded.** Marker distance is `altitude / tan(|gimbal_pitch|)`. At low altitudes with near-horizontal camera, distant objects project inaccurately. Recommended operating envelope: altitude 15–30m, gimbal pitch −45° to −60°.
