@@ -110,6 +110,9 @@ def process_telemetry(msg: dict):
         'sats': msg.get('sats', 0),
         'battery': msg.get('battery', None),
         'compass_error': msg.get('compass_error', False),
+        'home_lat': msg.get('home_lat', 0.0),
+        'home_lon': msg.get('home_lon', 0.0),
+        'distance_from_home': msg.get('distance_from_home', 0.0),
         'detections': detections_out,
     }
     sio.emit('telemetry', payload)

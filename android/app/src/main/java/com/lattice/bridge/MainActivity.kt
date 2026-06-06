@@ -44,6 +44,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var hudSats: TextView
     private lateinit var hudAlt: TextView
     private lateinit var hudSpeed: TextView
+    private lateinit var hudDist: TextView
     private lateinit var compassWarning: TextView
     private lateinit var videoPlaceholder: TextView
     private lateinit var videoSurface: TextureView
@@ -115,6 +116,7 @@ class MainActivity : AppCompatActivity() {
         hudSats = findViewById(R.id.hudSats)
         hudAlt = findViewById(R.id.hudAlt)
         hudSpeed = findViewById(R.id.hudSpeed)
+        hudDist = findViewById(R.id.hudDist)
         compassWarning = findViewById(R.id.compassWarning)
         videoPlaceholder = findViewById(R.id.videoPlaceholder)
         videoSurface = findViewById(R.id.videoSurface)
@@ -476,6 +478,18 @@ class MainActivity : AppCompatActivity() {
                     val vy = state.velocityY.toDouble()
                     val vz = state.velocityZ.toDouble()
                     tel.speed = Math.sqrt(vx*vx + vy*vy + vz*vz)
+                    // Stage 4A korak 3: home location za live distance HUD.
+                    // state.homeLocation je sinhroni getter; isHomeLocationSet=true tek nakon
+                    // prvog GPS lock-a + uzletanja drone-a.
+                    val home = state.homeLocation
+                    if (home != null && state.isHomeLocationSet) {
+                        tel.homeLat = home.latitude
+                        tel.homeLon = home.longitude
+                        tel.distanceFromHome = haversineMeters(tel.lat, tel.lon, tel.homeLat, tel.homeLon)
+                        runOnUiThread {
+                            hudDist.text = "DIST %.1f m".format(tel.distanceFromHome)
+                        }
+                    }
                     push()
                 } catch (t: Throwable) {
                     Log.e("Lattice", "FC callback error: ${t.message}")

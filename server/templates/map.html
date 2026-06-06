@@ -67,6 +67,7 @@
     <div class="row"><span class="key">sats</span><span class="val" id="sats">-</span></div>
     <div class="row"><span class="key">battery</span><span class="val" id="battery">-</span></div>
     <div class="row"><span class="key">compass</span><span class="val" id="compass">-</span></div>
+    <div class="row"><span class="key">dist home</span><span class="val" id="distHome">-</span></div>
   </div>
 
   <script>
@@ -127,6 +128,7 @@
       document.getElementById('battery').textContent = t.battery !== null ? t.battery + '%' : '-';
       document.getElementById('compass').textContent = t.compass_error ? 'ERROR' : 'OK';
       document.getElementById('compass').style.color = t.compass_error ? '#f66' : '#6cf';
+      document.getElementById('distHome').textContent = (t.distance_from_home != null && t.distance_from_home > 0) ? t.distance_from_home.toFixed(1) + ' m' : '-';
 
       document.getElementById('compass-banner').style.display = t.compass_error ? 'block' : 'none';
 
