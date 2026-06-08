@@ -28,7 +28,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
     private lateinit var statusText: TextView
 
     private val rotationMatrix = FloatArray(9)
+    private val cameraMatrix = FloatArray(9)
     private val orientation = FloatArray(3)
+    private val cameraOrientation = FloatArray(3)
     private var lastAccel = FloatArray(3)
     private var lastGyro = FloatArray(3)
     private var headingAccuracy: Int = -1
@@ -130,6 +132,13 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
             Sensor.TYPE_ROTATION_VECTOR -> {
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                 SensorManager.getOrientation(rotationMatrix, orientation)
+                SensorManager.remapCoordinateSystem(
+                    rotationMatrix,
+                    SensorManager.AXIS_X,
+                    SensorManager.AXIS_MINUS_Z,
+                    cameraMatrix
+                )
+                SensorManager.getOrientation(cameraMatrix, cameraOrientation)
             }
             Sensor.TYPE_ACCELEROMETER -> lastAccel = event.values.clone()
             Sensor.TYPE_GYROSCOPE -> lastGyro = event.values.clone()
@@ -149,9 +158,11 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
     }
 
     private fun updateUi() {
-        val headingDeg = (Math.toDegrees(orientation[0].toDouble()) + 360.0) % 360.0
+        val rawHeading = (Math.toDegrees(orientation[0].toDouble()) + 360.0) % 360.0
+        val camHeading = (Math.toDegrees(cameraOrientation[0].toDouble()) + 360.0) % 360.0
         val pitchDeg = Math.toDegrees(orientation[1].toDouble())
         val rollDeg = Math.toDegrees(orientation[2].toDouble())
+        val camPitchDeg = Math.toDegrees(cameraOrientation[1].toDouble())
 
         val accStr = "%+6.2f %+6.2f %+6.2f".format(lastAccel[0], lastAccel[1], lastAccel[2])
         val gyroStr = "%+6.3f %+6.3f %+6.3f".format(lastGyro[0], lastGyro[1], lastGyro[2])
@@ -169,13 +180,19 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
         }
 
         statusText.text = """
-            Heading:  %6.1f°  [%s]
-            Pitch:    %+6.1f°
-            Roll:     %+6.1f°
-            Accel:    %s m/s²
-            Gyro:     %s rad/s
-            GPS:      %s
-        """.trimIndent().format(headingDeg, accLabel, pitchDeg, rollDeg, accStr, gyroStr, gpsStr)
+            Heading raw:  %6.1f°  [%s]
+            Heading cam:  %6.1f°  (AR portrait)
+            Pitch raw:    %+6.1f°
+            Pitch cam:    %+6.1f°
+            Roll:         %+6.1f°
+            Accel:        %s m/s²
+            Gyro:         %s rad/s
+            GPS:          %s
+        """.trimIndent().format(
+            rawHeading, accLabel, camHeading,
+            pitchDeg, camPitchDeg, rollDeg,
+            accStr, gyroStr, gpsStr
+        )
     }
 
     override fun onPause() {
