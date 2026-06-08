@@ -26,6 +26,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
     private lateinit var locationManager: LocationManager
     private lateinit var previewView: PreviewView
     private lateinit var statusText: TextView
+    private lateinit var overlayView: OverlayView
 
     private val rotationMatrix = FloatArray(9)
     private val cameraMatrix = FloatArray(9)
@@ -53,6 +54,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
 
         previewView = findViewById(R.id.previewView)
         statusText = findViewById(R.id.statusText)
+        overlayView = findViewById(R.id.overlayView)
 
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
