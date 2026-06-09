@@ -5,7 +5,7 @@ import io.socket.client.IO
 import io.socket.client.Socket
 import org.json.JSONObject
 
-class TelemetryClient(private val serverUrl: String) {
+class TelemetryClient(private var serverUrl: String) {
 
     companion object {
         private const val TAG = "TelemetryClient"
@@ -17,6 +17,12 @@ class TelemetryClient(private val serverUrl: String) {
     var onDisconnect: (() -> Unit)? = null
     var onConnectError: ((String) -> Unit)? = null
     var onTelemetry: ((JSONObject) -> Unit)? = null
+
+    fun currentUrl(): String = serverUrl
+
+    fun setUrl(url: String) {
+        serverUrl = url
+    }
 
     fun connect() {
         try {
