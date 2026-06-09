@@ -28,4 +28,17 @@
         android:padding="10dp"
         android:text="initializing..." />
 
+    <TextView
+        android:id="@+id/sockText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_gravity="top|end"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:fontFamily="monospace"
+        android:background="#A0000000"
+        android:padding="8dp"
+        android:text="SOCK: -" />
+
 </FrameLayout>

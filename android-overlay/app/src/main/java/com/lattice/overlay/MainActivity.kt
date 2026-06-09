@@ -2,6 +2,7 @@ package com.lattice.overlay
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -19,6 +20,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.lattice.overlay.network.TelemetryClient
 
 class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener {
 
@@ -26,6 +28,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
     private lateinit var locationManager: LocationManager
     private lateinit var previewView: PreviewView
     private lateinit var statusText: TextView
+    private lateinit var sockText: TextView
     private lateinit var overlayView: OverlayView
 
     private val rotationMatrix = FloatArray(9)
@@ -38,8 +41,14 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
 
     private var lastGps: Location? = null
 
+    private val telemetryClient = TelemetryClient(MAC_URL)
+    private var lastDetCount = 0
+    private var totalDetections = 0
+    private var lastTelemetryMs = 0L
+
     companion object {
         private const val TAG = "Overlay"
+        private const val MAC_URL = "http://10.152.113.113:5000"
         private const val REQ_PERMISSIONS = 100
         private val NEEDED = arrayOf(
             Manifest.permission.CAMERA,
@@ -54,10 +63,13 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
 
         previewView = findViewById(R.id.previewView)
         statusText = findViewById(R.id.statusText)
+        sockText = findViewById(R.id.sockText)
         overlayView = findViewById(R.id.overlayView)
 
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+
+        wireTelemetryClient()
 
         val missing = NEEDED.any {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
@@ -66,6 +78,52 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
             ActivityCompat.requestPermissions(this, NEEDED, REQ_PERMISSIONS)
         } else {
             startAll()
+        }
+    }
+
+    private fun wireTelemetryClient() {
+        sockText.text = "SOCK: connecting..."
+        sockText.setTextColor(Color.YELLOW)
+
+        telemetryClient.onConnect = {
+            runOnUiThread {
+                sockText.setTextColor(Color.GREEN)
+                refreshSockText()
+            }
+        }
+        telemetryClient.onDisconnect = {
+            runOnUiThread {
+                sockText.setTextColor(Color.RED)
+                sockText.text = "SOCK: down"
+            }
+        }
+        telemetryClient.onConnectError = { msg ->
+            Log.e(TAG, "sock connect error: $msg")
+            runOnUiThread {
+                sockText.setTextColor(Color.RED)
+                sockText.text = "SOCK: err"
+            }
+        }
+        telemetryClient.onTelemetry = { payload ->
+            val detsArr = payload.optJSONArray("detections")
+            lastDetCount = detsArr?.length() ?: 0
+            totalDetections += lastDetCount
+            lastTelemetryMs = System.currentTimeMillis()
+            Log.i(TAG, "telemetry: dets=$lastDetCount total=$totalDetections payload=$payload")
+            runOnUiThread { refreshSockText() }
+        }
+
+        telemetryClient.connect()
+    }
+
+    private fun refreshSockText() {
+        val connected = telemetryClient.isConnected()
+        if (connected) {
+            val ageMs = if (lastTelemetryMs > 0) System.currentTimeMillis() - lastTelemetryMs else -1L
+            val ageStr = if (ageMs < 0) "no msgs" else "${ageMs}ms ago"
+            sockText.text = "SOCK: OK\nlast: $ageStr\nDET: $lastDetCount (Σ$totalDetections)"
+        } else {
+            sockText.text = "SOCK: down"
         }
     }
 
@@ -204,5 +262,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
             locationManager.removeUpdates(this)
         } catch (se: SecurityException) {
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        telemetryClient.disconnect()
     }
 }
