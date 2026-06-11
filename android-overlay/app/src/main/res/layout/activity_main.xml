@@ -41,4 +41,55 @@
         android:padding="8dp"
         android:text="SOCK: -" />
 
+    <TextView
+        android:id="@+id/calBanner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|top"
+        android:layout_marginTop="180dp"
+        android:padding="16dp"
+        android:background="#CC000000"
+        android:textColor="#FFFF00"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:text="TAP THE DRONE"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/bottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:background="#A0000000">
+
+        <Button
+            android:id="@+id/calBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CAL DRONE"
+            android:textSize="12sp" />
+
+        <Button
+            android:id="@+id/resetBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="RESET BIAS"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/biasText"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:gravity="center_vertical"
+            android:textColor="#00FF00"
+            android:textSize="13sp"
+            android:fontFamily="monospace"
+            android:text="bias: 0.0°" />
+    </LinearLayout>
+
 </FrameLayout>

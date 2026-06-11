@@ -15,6 +15,9 @@ import android.location.LocationManager
 import android.os.Bundle
 import android.text.InputType
 import android.util.Log
+import android.view.MotionEvent
+import android.view.View
+import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
@@ -26,7 +29,9 @@ import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.lattice.overlay.network.TelemetryClient
+import com.lattice.overlay.projection.CompassBias
 import com.lattice.overlay.projection.GpsToScreen
+import com.lattice.overlay.projection.HeadingFilter
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener {
@@ -37,6 +42,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
     private lateinit var statusText: TextView
     private lateinit var sockText: TextView
     private lateinit var overlayView: OverlayView
+    private lateinit var calBtn: Button
+    private lateinit var resetBtn: Button
+    private lateinit var biasText: TextView
+    private lateinit var calBanner: TextView
 
     private val rotationMatrix = FloatArray(9)
     private val cameraMatrix = FloatArray(9)
@@ -45,15 +54,19 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
     private var lastAccel = FloatArray(3)
     private var lastGyro = FloatArray(3)
     private var headingAccuracy: Int = -1
+    private var filteredHeading: Double = 0.0
 
     private var lastGps: Location? = null
     private var lastPayload: JSONObject? = null
 
     private lateinit var telemetryClient: TelemetryClient
     private lateinit var prefs: SharedPreferences
+    private lateinit var compassBias: CompassBias
+    private lateinit var headingFilter: HeadingFilter
     private var lastDetCount = 0
     private var totalDetections = 0
     private var lastTelemetryMs = 0L
+    private var calibrationMode = false
 
     private val screenW: Int by lazy { resources.displayMetrics.widthPixels }
     private val screenH: Int by lazy { resources.displayMetrics.heightPixels }
@@ -85,16 +98,34 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
         statusText = findViewById(R.id.statusText)
         sockText = findViewById(R.id.sockText)
         overlayView = findViewById(R.id.overlayView)
+        calBtn = findViewById(R.id.calBtn)
+        resetBtn = findViewById(R.id.resetBtn)
+        biasText = findViewById(R.id.biasText)
+        calBanner = findViewById(R.id.calBanner)
 
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
         prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        compassBias = CompassBias(prefs)
+        headingFilter = HeadingFilter()
 
         val initialIp = prefs.getString(KEY_MAC_IP, DEFAULT_MAC_IP) ?: DEFAULT_MAC_IP
         telemetryClient = TelemetryClient("http://$initialIp:$SERVER_PORT")
 
         sockText.setOnClickListener { showIpDialog() }
+        calBtn.setOnClickListener { onCalButtonClick() }
+        resetBtn.setOnClickListener { onResetButtonClick() }
 
+        overlayView.setOnTouchListener { _, event ->
+            if (calibrationMode && event.action == MotionEvent.ACTION_DOWN) {
+                performCalibration(event.x, event.y)
+                true
+            } else {
+                false
+            }
+        }
+
+        updateBiasDisplay()
         wireTelemetryClient()
 
         val missing = NEEDED.any {
@@ -107,6 +138,71 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
         }
     }
 
+    private fun onCalButtonClick() {
+        if (calibrationMode) {
+            exitCalibrationMode()
+            return
+        }
+        val payload = lastPayload
+        if (payload == null || lastGps == null) {
+            Toast.makeText(this, "Need drone telemetry + phone GPS first", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val droneLat = payload.optDouble("lat", Double.NaN)
+        val droneLon = payload.optDouble("lon", Double.NaN)
+        if (droneLat.isNaN() || droneLon.isNaN()) {
+            Toast.makeText(this, "Payload has no drone lat/lon", Toast.LENGTH_SHORT).show()
+            return
+        }
+        enterCalibrationMode()
+    }
+
+    private fun onResetButtonClick() {
+        compassBias.reset()
+        updateBiasDisplay()
+        Toast.makeText(this, "Compass bias reset to 0", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun enterCalibrationMode() {
+        calibrationMode = true
+        calBanner.visibility = View.VISIBLE
+        calBtn.text = "CANCEL"
+    }
+
+    private fun exitCalibrationMode() {
+        calibrationMode = false
+        calBanner.visibility = View.GONE
+        calBtn.text = "CAL DRONE"
+    }
+
+    private fun performCalibration(tapX: Float, tapY: Float) {
+        val payload = lastPayload ?: return
+        val phoneGps = lastGps ?: return
+        val droneLat = payload.optDouble("lat", Double.NaN)
+        val droneLon = payload.optDouble("lon", Double.NaN)
+        if (droneLat.isNaN() || droneLon.isNaN()) return
+
+        val phoneHeadingMeasured = filteredHeading
+        val newBias = compassBias.calibrate(
+            tapX, screenW,
+            phoneGps.latitude, phoneGps.longitude,
+            droneLat, droneLon,
+            phoneHeadingMeasured, HFOV_DEG
+        )
+
+        exitCalibrationMode()
+        updateBiasDisplay()
+        Toast.makeText(
+            this,
+            "Calibrated. Bias: %+.1f°".format(newBias),
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
+    private fun updateBiasDisplay() {
+        biasText.text = "bias: %+.1f°".format(compassBias.getBias())
+    }
+
     private fun showIpDialog() {
         val currentIp = prefs.getString(KEY_MAC_IP, DEFAULT_MAC_IP) ?: DEFAULT_MAC_IP
         val edit = EditText(this).apply {
@@ -116,10 +212,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
             hint = "e.g. 192.168.1.11 or 10.152.113.113"
             setPadding(40, 30, 40, 30)
         }
-
         AlertDialog.Builder(this)
             .setTitle("Mac server IP")
-            .setMessage("Server listens on port $SERVER_PORT.\nTap SOCK badge to change later.")
+            .setMessage("Server listens on port $SERVER_PORT.")
             .setView(edit)
             .setPositiveButton("Save & reconnect") { _, _ ->
                 val newIp = edit.text.toString().trim()
@@ -187,7 +282,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
         val phoneLat = phoneGps.latitude
         val phoneLon = phoneGps.longitude
         val phoneAlt = OPERATOR_HEIGHT_M
-        val phoneHeading = (Math.toDegrees(cameraOrientation[0].toDouble()) + 360.0) % 360.0
+        val phoneHeading = compassBias.apply(filteredHeading)
         val phonePitch = Math.toDegrees(cameraOrientation[1].toDouble())
 
         val droneLat = payload.optDouble("lat", Double.NaN)
@@ -285,7 +380,6 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
                 preview.setSurfaceProvider(previewView.surfaceProvider)
                 provider.unbindAll()
                 provider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview)
-                Log.i(TAG, "Camera bound to lifecycle")
             } catch (e: Exception) {
                 Log.e(TAG, "Camera bind failed: ${e.message}", e)
             }
@@ -327,6 +421,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
                 )
                 SensorManager.getOrientation(cameraMatrix, cameraOrientation)
 
+                val rawCam = (Math.toDegrees(cameraOrientation[0].toDouble()) + 360.0) % 360.0
+                filteredHeading = headingFilter.update(rawCam)
+
                 lastPayload?.let { payload ->
                     val markers = buildMarkersFromPayload(payload)
                     overlayView.setMarkers(markers)
@@ -351,7 +448,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
 
     private fun updateUi() {
         val rawHeading = (Math.toDegrees(orientation[0].toDouble()) + 360.0) % 360.0
-        val camHeading = (Math.toDegrees(cameraOrientation[0].toDouble()) + 360.0) % 360.0
+        val correctedHeading = compassBias.apply(filteredHeading)
         val rollDeg = Math.toDegrees(orientation[2].toDouble())
         val camPitchDeg = Math.toDegrees(cameraOrientation[1].toDouble())
 
@@ -371,14 +468,15 @@ class MainActivity : AppCompatActivity(), SensorEventListener, LocationListener 
         }
 
         statusText.text = """
-            H raw: %6.1f° [%s]
-            H cam: %6.1f°
-            P cam: %+6.1f°  R: %+6.1f°
-            Acc:   %s
-            Gyr:   %s
-            GPS:   %s
+            H raw:    %6.1f° [%s]
+            H filt:   %6.1f°
+            H corr:   %6.1f°
+            P cam:    %+6.1f°  R: %+6.1f°
+            Acc:      %s
+            Gyr:      %s
+            GPS:      %s
         """.trimIndent().format(
-            rawHeading, accLabel, camHeading,
+            rawHeading, accLabel, filteredHeading, correctedHeading,
             camPitchDeg, rollDeg, accStr, gyroStr, gpsStr
         )
     }
