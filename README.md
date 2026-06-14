@@ -11,9 +11,9 @@ Built as a learning and portfolio project to explore the technical problems of b
 ```mermaid
 flowchart LR
     Drone[DJI Mavic 2 Zoom] -->|MSDK over OcuSync| RC[Standard RC]
-    RC -->|USB| Phone[Android Bridge<br/>YOLOv8n TFLite]
+    RC -->|USB| Phone[Android Unified App<br/>BridgeService + AR Overlay<br/>YOLOv8n TFLite]
     Phone -->|UDP MAVLink :14550| Mac[Mac Ground Station<br/>Flask + Socket.IO]
-    Phone -->|HTTP POST detections| Mac
+    Mac -->|WebSocket: telemetry + detections| Phone
     Mac -->|WebSocket| Browser[Leaflet Map UI]
 ```
 
@@ -34,7 +34,7 @@ The drone streams telemetry via DJI Mobile SDK to the Android app. The phone run
 | 2 | FOV trapezoid projection on map | Complete |
 | 3 | Live video feed (DJICodecManager.getBitmap @ 2 Hz) | Complete |
 | 4A | YOLO person/object detection + georeferencing | Complete (accuracy validation ongoing) |
-| 4B | AR overlay on second phone | Future work |
+| 4B | AR overlay (unified single-phone app) | Complete (field-validated) |
 
 ## Key Engineering Decisions
 
