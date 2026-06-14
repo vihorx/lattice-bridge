@@ -116,7 +116,6 @@ Field-measured georef accuracy with operator (target) stationary on a known GPS 
 
 ## Future Work
 
-- **Stage 4B: AR overlay on a second phone** — handheld view showing detection markers overlaid on phone camera using magnetometer + gyro fusion (no ARCore), with drone-tap calibration to offset compass bias.
 - **NNAPI / GPU delegate** for TFLite inference (currently CPU-only at ~500ms per frame; expected 2-3× speedup).
 - **Accuracy measurement campaign** — field trials with known-GPS ground truth to populate empirical error tables.
 
