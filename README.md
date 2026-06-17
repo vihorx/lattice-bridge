@@ -86,6 +86,11 @@ Phone and Mac must be on the same WiFi. Default server IP is `192.168.1.11`; adj
 
 ## Accuracy
 
+<p align="center">
+  <img src="docs/Lattice-demo-github-under10mb.gif" alt="Lattice desktop demo" width="700">
+</p>
+
+
 Field-measured georef accuracy with operator (target) stationary on a known GPS point and the drone hovering at varying altitude and distance. Ground truth was measured via phone GPS (long-press in Google Maps); marker coordinates from the app's COPY LAST button.
 
 **Ground truth:** `45.266426, 19.863698` (Novi Sad, Danube quay, bench)
