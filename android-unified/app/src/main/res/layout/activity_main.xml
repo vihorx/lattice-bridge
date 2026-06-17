@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/previewView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000" />
+
+    <TextureView
+        android:id="@+id/droneVideoView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+    <com.lattice.unified.overlay.OverlayView
+        android:id="@+id/overlayView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <TextView
+        android:id="@+id/statusText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_gravity="top|start"
+        android:textColor="#00FF00"
+        android:textSize="13sp"
+        android:fontFamily="monospace"
+        android:background="#A0000000"
+        android:padding="10dp"
+        android:text="initializing..." />
+
+    <LinearLayout
+        android:id="@+id/droneHud"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_gravity="top|start"
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:background="#A0000000"
+        android:visibility="gone">
+
+        <TextView android:id="@+id/hudBat" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#00FF00" android:textSize="16sp" android:fontFamily="monospace" android:text="BAT --%" />
+        <TextView android:id="@+id/hudSats" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#00FF00" android:textSize="16sp" android:fontFamily="monospace" android:text="SAT --" />
+        <TextView android:id="@+id/hudAlt" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#00FF00" android:textSize="16sp" android:fontFamily="monospace" android:text="ALT -- m" />
+        <TextView android:id="@+id/hudSpeed" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#00FF00" android:textSize="16sp" android:fontFamily="monospace" android:text="SPD -- m/s" />
+        <TextView android:id="@+id/hudDist" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#00FF00" android:textSize="16sp" android:fontFamily="monospace" android:text="DIST -- m" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/compassWarning"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="80dp"
+        android:padding="8dp"
+        android:background="#CCFF0000"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:text="COMPASS ERROR"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:layout_gravity="top|end"
+        android:orientation="vertical">
+
+        <Button
+            android:id="@+id/modeBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="4dp"
+            android:text="OVERLAY"
+            android:textSize="11sp"
+            android:minHeight="0dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp" />
+
+        <TextView
+            android:id="@+id/bridgeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFF00"
+            android:textSize="12sp"
+            android:fontFamily="monospace"
+            android:background="#A0000000"
+            android:padding="8dp"
+            android:layout_marginBottom="4dp"
+            android:text="Bridge: starting" />
+
+        <TextView
+            android:id="@+id/sockText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:fontFamily="monospace"
+            android:background="#A0000000"
+            android:padding="8dp"
+            android:text="SOCK: -" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/bridgeControls"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="end|center_vertical"
+        android:orientation="vertical"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="180dp"
+        android:layout_marginBottom="40dp"
+        android:visibility="gone">
+
+        <TextView android:id="@+id/gimbalPitchLabel" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#FFFFFF" android:textSize="12sp" android:fontFamily="monospace"
+            android:background="#A0000000" android:padding="4dp" android:text="0°" />
+        <SeekBar android:id="@+id/gimbalSeek" android:layout_width="40dp" android:layout_height="180dp"
+            android:rotation="270" android:max="90" android:progress="90"
+            android:layout_marginTop="4dp" android:layout_marginBottom="20dp"
+            android:layout_gravity="center_horizontal" />
+
+        <TextView android:id="@+id/zoomLabel" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:textColor="#FFFFFF" android:textSize="12sp" android:fontFamily="monospace"
+            android:background="#A0000000" android:padding="4dp" android:text="1.0x"
+            android:layout_marginTop="20dp" />
+        <SeekBar android:id="@+id/zoomSeek" android:layout_width="40dp" android:layout_height="180dp"
+            android:rotation="270" android:max="240" android:progress="0"
+            android:layout_marginTop="4dp"
+            android:layout_gravity="center_horizontal" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/calBanner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|top"
+        android:layout_marginTop="180dp"
+        android:padding="16dp"
+        android:background="#CC000000"
+        android:textColor="#FFFF00"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:text="TAP THE DRONE"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:id="@+id/overlayBottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:background="#A0000000">
+
+        <Button android:id="@+id/calBtn" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="CAL DRONE" android:textSize="12sp" />
+        <Button android:id="@+id/resetBtn" android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginStart="8dp" android:text="RESET BIAS" android:textSize="12sp" />
+        <TextView android:id="@+id/biasText" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="wrap_content" android:layout_marginStart="12dp"
+            android:gravity="center_vertical" android:textColor="#00FF00" android:textSize="13sp"
+            android:fontFamily="monospace" android:text="bias: 0.0°" />
+    </LinearLayout>
+
+</FrameLayout>

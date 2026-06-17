@@ -1,0 +1,6 @@
+# Get your DJI API key at https://developer.dji.com
+# Bound applicationId for this app: com.lattice.bridge
+dji.api.key=YOUR_DJI_API_KEY_HERE
+
+# SDK location (usually auto-populated by Android Studio)
+# sdk.dir=/Users/yourname/Library/Android/sdk

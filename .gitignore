@@ -41,3 +41,11 @@ handoff_files_*/
 *.bak
 *.bak.*
 venv/
+
+# android-unified/ build artifacts
+android-unified/.gradle/
+android-unified/build/
+android-unified/app/build/
+android-unified/local.properties
+android-unified/.idea/
+android-unified/captures/
