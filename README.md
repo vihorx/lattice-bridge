@@ -84,8 +84,6 @@ Server listens on `:5000` (HTTP/WebSocket) and `:14550` (MAVLink UDP). Open `htt
 
 Phone and Mac must be on the same WiFi. Default server IP is `192.168.1.11`; adjust in the app for your Mac's address.
 
-![Demo: drone telemetry on the map alongside the live drone video feed](docs/Lattice-demo-github-under10mb.gif)
-
 ## Accuracy
 
 Field-measured georef accuracy with operator (target) stationary on a known GPS point and the drone hovering at varying altitude and distance. Ground truth was measured via phone GPS (long-press in Google Maps); marker coordinates from the app's COPY LAST button.
