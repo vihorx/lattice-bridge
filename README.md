@@ -10,8 +10,8 @@ Built as a learning and portfolio project to explore the technical problems of b
 
 ```mermaid
 flowchart LR
-    Drone[DJI Mavic 2 Zoom] -->|MSDK over OcuSync| RC[Standard RC]
-    RC -->|USB| Phone[Android Unified App<br/>BridgeService + AR Overlay<br/>YOLOv8n TFLite]
+    Drone[DJI Mavic 2 Zoom] -->|OcuSync 2.0| RC[Standard RC]
+    RC -->|USB + DJI MSDK| Phone[Android Unified App<br/>BridgeService + AR Overlay<br/>YOLOv8n TFLite]
     Phone -->|UDP MAVLink :14550| Mac[Mac Ground Station<br/>Flask + Socket.IO]
     Mac -->|WebSocket: telemetry + detections| Phone
     Mac -->|WebSocket| Browser[Leaflet Map UI]
@@ -32,8 +32,8 @@ The drone streams telemetry via DJI Mobile SDK to the Android app. The phone run
 |-------|-------------|--------|
 | 1 | Telemetry pipeline (GPS, attitude, gimbal) | Complete |
 | 2 | FOV trapezoid projection on map | Complete |
-| 3 | Live video feed (DJICodecManager.getBitmap @ 2 Hz) | Complete |
-| 4A | YOLO person/object detection + georeferencing | Complete (accuracy validation ongoing) |
+| 3 | Live video feed + frame grab for inference (DJICodecManager.getBitmap, 1-2 Hz) | Complete |
+| 4A | YOLO person/object detection + georeferencing | Complete |
 | 4B | AR overlay (unified single-phone app) | Complete (field-validated) |
 
 ### AR Overlay (Stage 4B)
@@ -120,7 +120,7 @@ Field-measured georef accuracy with operator (target) stationary on a known GPS 
 
 **Monocular georef accuracy is geometrically bounded.** Marker distance is `altitude / tan(|gimbal_pitch|)`. At low altitudes with near-horizontal camera, distant objects project inaccurately. Recommended operating envelope: altitude 15–30m, gimbal pitch −45° to −60°.
 
-**Magnetometer drift near metal infrastructure** (steel bridges, rebar, large vehicles) can introduce up to ±20° heading error, translating to lateral marker error proportional to range.
+**Phone compass calibration sensitivity.** AR overlay projection on the phone uses the phone's magnetometer for heading, which requires careful manual calibration before each session and can drift ±5-15° over a flight if the phone is near metal or electronics. A drone-tap calibration step in the app (tap the visible drone in the AR view) re-aligns the bias. Drone heading itself comes from DJI's onboard sensor fusion and is independent.
 
 **Detection only, no tracking** — multiple objects per frame are detected and shown simultaneously, but objects have no persistent IDs across frames. The same object detected on two consecutive frames produces two independent markers (the 3m spatial dedup hides this when stationary).
 
@@ -128,8 +128,9 @@ Field-measured georef accuracy with operator (target) stationary on a known GPS 
 
 ## Future Work
 
-- **NNAPI / GPU delegate** for TFLite inference (currently CPU-only at ~500ms per frame; expected 2-3× speedup).
-- **Accuracy measurement campaign** — field trials with known-GPS ground truth to populate empirical error tables.
+- **Drone-camera AR projection.** Currently AR markers only render on the phone camera view; projecting detection markers onto the drone video feed (same pinhole math, reversed) would let an operator visually confirm detections against the aerial view.
+- **Per-device camera FOV calibration.** Phone camera HFOV is currently a hardcoded ~67°; a one-time calibration step (point at known-distance object) would tighten AR projection accuracy.
+- **Multi-frame detection tracking.** Persistent object IDs across consecutive frames would enable trajectory rendering and "object pinned for N seconds" UI, instead of the current frame-by-frame independent markers.
 
 ## License
 
