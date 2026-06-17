@@ -67,7 +67,7 @@ python app.py
 ```
 Server listens on `:5000` (HTTP/WebSocket) and `:14550` (MAVLink UDP). Open `http://localhost:5000` in browser to see the map.
 
-### Android
+### Android — Bridge app (Stages 1–4A, streams to Mac map UI)
 1. Open `android/` in Android Studio
 2. Copy `android/local.properties.example` → `android/local.properties`
 3. Get a DJI API key from https://developer.dji.com and paste it into `local.properties`:
@@ -80,9 +80,25 @@ Server listens on `:5000` (HTTP/WebSocket) and `:14550` (MAVLink UDP). Open `htt
    ./gradlew assembleDebug
    adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
-5. Connect phone via USB to the standard DJI RC (Mavic 2 Zoom powered on).
+5. Connect phone via USB to the standard DJI RC (Mavic 2 Zoom powered on). Telemetry, video frames, and YOLO detections stream to the Mac server; view the map at `http://<mac-ip>:5000`.
 
-Phone and Mac must be on the same WiFi. Default server IP is `192.168.1.11`; adjust in the app for your Mac's address.
+### Android — Unified app (Stage 4B, AR overlay + Bridge in one APK)
+The unified app subsumes the Bridge app and adds AR overlay rendered directly on the phone camera. Run **either** the Bridge app **or** the Unified app, not both — they share the same `applicationId` and DJI API key binding.
+
+1. Open `android-unified/` in Android Studio
+2. Copy `android-unified/local.properties.example` → `android-unified/local.properties` and paste your DJI API key (same key works for both apps)
+3. Build & install:
+```bash
+   cd android-unified
+   ./gradlew assembleDebug
+   adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+4. Connect phone via USB to the standard DJI RC.
+5. Tap the mode button (top-right corner) to switch between:
+   - **OVERLAY mode** (portrait) — phone camera + AR detection markers projected onto the real world, with drone-tap compass calibration
+   - **BRIDGE mode** (landscape) — drone video feed + HUD (battery, satellites, altitude, speed, distance from home) + gimbal pitch and zoom sliders
+
+Phone and Mac must be on the same WiFi (or use the phone's hotspot — Mac joins the field network via the phone). Default server IP is `192.168.1.11`; adjust in the app for your Mac's address.
 
 ## Accuracy
 
