@@ -144,9 +144,9 @@ Field-measured georef accuracy with operator (target) stationary on a known GPS 
 
 ## Future Work
 
-- **Drone-camera AR projection.** Currently AR markers only render on the phone camera view; projecting detection markers onto the drone video feed (same pinhole math, reversed) would let an operator visually confirm detections against the aerial view.
-- **Per-device camera FOV calibration.** Phone camera HFOV is currently a hardcoded ~67°; a one-time calibration step (point at known-distance object) would tighten AR projection accuracy.
-- **Multi-frame detection tracking.** Persistent object IDs across consecutive frames would enable trajectory rendering and "object pinned for N seconds" UI, instead of the current frame-by-frame independent markers.
+- **Detection overlay on drone video feed.** BRIDGE mode currently displays raw drone video. Drawing YOLO bounding boxes and past-detection markers directly on the drone feed would create a heads-up display view, mirroring the AR overlay that currently only exists on the phone camera side.
+- **Per-device phone camera FOV calibration.** Phone camera HFOV is currently a hardcoded `76°` in `MainActivity.kt`. A one-time calibration step (point at a known-distance object) would tighten AR projection accuracy across different phone models.
+- **Multi-frame detection tracking.** Persistent object IDs across consecutive frames (SORT, ByteTrack, or a Kalman-based tracker) would enable trajectory rendering and "pinned for N seconds" UI, instead of the current frame-by-frame independent markers.
 
 ## License
 
