@@ -49,7 +49,6 @@ The unified app combines the BridgeService (drone telemetry + YOLO inference) wi
 
 **Compass heading from `flightController.compass.heading`, not `attitude.yaw`.** Side-by-side comparison with DJI GO 4 revealed that `attitude.yaw` drifts 100°+ from the true magnetic heading. The `compass.getHeading()` API matches DJI GO 4's compass readout.
 
-**Gimbal yaw set to 0 on Mavic 2 Zoom.** The Mavic 2 Zoom's gimbal yaw is mechanically locked to the aircraft body — passing the SDK's gimbal yaw value to the server caused double-counting in the camera heading computation.
 
 **YOLOv8n exported via `onnx2tf` for TFLite.** This export produces normalized 0..1 bounding box coordinates, NOT the pixel 0..640 range used by standard Ultralytics PyTorch outputs. Postprocessing multiplies by input size before NMS — discovered empirically when all detections landed at the same map coordinate.
 
